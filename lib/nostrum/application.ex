@@ -36,5 +36,6 @@ defmodule Nostrum.Application do
     :ets.new(:presences, [:set, :public, :named_table])
     :ets.new(:guild_shard_map, [:set, :public, :named_table])
     :ets.new(:channel_guild_map, [:set, :public, :named_table])
+    :ets.new(:voice_states, [:set, :public, :named_table])
   end
 end

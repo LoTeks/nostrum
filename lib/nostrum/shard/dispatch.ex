@@ -1,7 +1,7 @@
 defmodule Nostrum.Shard.Dispatch do
   @moduledoc false
 
-  alias Nostrum.Cache.{ChannelCache, PresenceCache, UserCache}
+  alias Nostrum.Cache.{ChannelCache, PresenceCache, UserCache, VoiceStateCache}
   alias Nostrum.Cache.Guild.GuildServer
   alias Nostrum.Cache.Me
   alias Nostrum.Shard.Session
@@ -109,6 +109,9 @@ defmodule Nostrum.Shard.Dispatch do
     {presences, guild} = Map.pop(guild, :presences, [])
     PresenceCache.bulk_create(guild.id, presences)
 
+    {voice_states, guild} = Map.pop(guild, :voice_states, [])
+    VoiceStateCache.bulk_create(guild.id, voice_states)
+
     guild = Util.cast(guild, {:struct, Guild})
 
     case GuildServer.create(guild) do
@@ -215,7 +218,12 @@ defmodule Nostrum.Shard.Dispatch do
     {event, UserCache.update(p), state}
   end
 
-  def handle_event(:VOICE_STATE_UPDATE = event, p, state), do: {event, p, state}
+  def handle_event(:VOICE_STATE_UPDATE = event, p, state) do
+    [
+      {event, VoiceStateCache.update(p), state}
+      | [handle_event(:GUILD_MEMBER_UPDATE, Map.put(p.member, :guild_id, p.guild_id), state)]
+    ]
+  end
 
   def handle_event(:VOICE_SERVER_UPDATE = event, p, state), do: {event, p, state}
 
